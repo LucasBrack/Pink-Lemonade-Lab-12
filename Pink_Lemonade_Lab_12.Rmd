@@ -1,0 +1,179 @@
+---
+title: "Pink Lemonade Lab 12"
+author: "Pink Lemonade- Lucas Brack, Jon Guay, Max Ward, Harold Chang"
+date: "April 12, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(gapminder)
+library(tidyverse)
+library(stringr)
+data <- gapminder_unfiltered
+```
+
+#How similar are the life expectancies between Europe and Americas?
+```{r}
+perm_mean <- function(perms = 1000, values, n1){
+  ## Variables ##
+  # perms: The number of permutations 
+  # values (num): 
+  # n1 (int): Size of group 1
+  ###############
+  
+  # Step 1: Create vector of zeroes of length "perms" to store permuted mean differnces
+  
+  zero_vector=numeric(1772)
+  
+  # Loop throught number of permutations
+  for (i in c(1:perms)){
+    # Step 2:Randomly separate vector "values" into disjoint groups of size "n1" and "length(values) - n1" respectively
+    groups<-sample(values,length(values), replace = FALSE)
+    
+    group1<-groups[1:n1]
+    group2<-groups[1+n1:length(values)-1]
+    
+    # Step 3: Compute the sample means for the two groups from step 2
+    mean_group1<-mean(group1)
+
+    mean_group2<-mean(group2)
+    
+    # Step 4:  Compute the difference in sample means, store the value in the vector from step 1
+    zero_vector[i]=(mean_group2-mean_group1)
+  }
+  return(zero_vector)
+  
+}
+```
+
+```{r,echo=FALSE, message = FALSE}
+
+AmericasEurope <- data %>%
+
+  filter(continent == "Americas" | continent ==  "Europe") %>%
+
+  select(-'pop',-'gdpPercap')
+
+
+
+DataForPlot <- perm_mean(perms = 1000, AmericasEurope$lifeExp,350)
+
+
+
+Dataneeded <- cbind(AmericasEurope, DataForPlot)
+
+
+ggplot(data = AmericasEurope) +
+
+  geom_density(mapping = aes(x = DataForPlot, color = continent)) +
+
+  geom_vline(xintercept = 0.01273659, color = 'blue') +
+
+  geom_vline(xintercept = -.41924634, color = 'red') +
+
+  geom_vline(xintercept = .42350648, color = 'purple') +
+
+  geom_vline(xintercept = .5922599, color = 'black') +
+
+  geom_vline(xintercept = -.5922599, color = 'black')
+
+quantile(DataForPlot)
+
+
+
+```
+As we can see, the 50% is nearly zero for our permutation test between the two continents.
+
+This tells us that the two continents life expectancies are indeed similar
+
+Shown on the plots are the other values of the 25, and 75%.
+
+The two densities are very similar.
+
+The min value is a difference of -2.04, while the max is a difference of 1.94)
+
+These values most likely represent countries of significant differences in quality of life.
+
+Overall, we  conclude the life expectancies are indeed very similar. 
+
+The black lines represent the pvalue.
+
+###Calculating P value
+
+```{r}
+
+a <- 0
+
+s <- sd(Dataneeded$DataForPlot)
+
+n <- 660
+
+xbar <- mean(Dataneeded$DataForPlot)
+
+z <- (xbar - a)/(s/sqrt(n))
+
+
+
+pvalue <- 2*pnorm(-abs(z))
+
+```
+
+Our p-value gives us a rather large probability of an observation assuming our null hypothesis is true, so we accept this.  Our p value has a value of .5922599
+
+
+#Is there a strong correlation between population an GDP per capita? 
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+
+perm_cor <- function(perms = 1000, x, y)
+{
+  ## Variables ##
+  # perms: The number of permutations 
+  # x: Vector 1 - for computing correlation
+  # y: Vector 2 - for computing correlation
+  ###############
+  
+  # Step 1: Create vector of zeroes of length "perms" to store permuted mean differnces
+  zero_vector_2=numeric(1000)
+  # Loop throught number of permutations
+  for (i in c(1:perms)){
+    # Step 2:
+    # Randomly mix up the values in the vector "y"
+    mixed_y<-sample(y,length(y),replace=FALSE)
+    # Step 3: Compute the correlation between x and the randomly mixed up y-vector. Store this value in the vector from step 1.
+    corr=cor(x,mixed_y)
+    
+    zero_vector_2[i]=(corr)
+  }
+  
+  # Step 4: Return new updated vector, created in step 1
+  return(zero_vector_2)
+}
+```
+
+
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+
+Lab12 = perm_cor(perms=1000,data$pop, data$gdpPercap)
+
+yeah = cor(data$gdpPercap, data$pop)
+
+m1 <- as_tibble(Lab12)
+
+ggplot(data = m1)+
+
+  geom_histogram(mapping = aes(x= Lab12))+
+
+  geom_vline(xintercept = yeah, color = 'blue') +
+
+  ggtitle('Correlation Permutation Test (GDP Percap vs Population)')
+
+```
+
+
+As we can see from the graph the correlation between population and GDP Percap is very rare in the order it was given (blue line) because on the graph the blue line is relatively far away from the rest of the data and is an outlier.  
+
+
+
+###Who did what?
+  JOn and Lucas worked on the 2 sample permutation test, developing the code for the function, with JOn doing most of the code, and the visual representation for the data, as well as answering the question. Lucas helped debug this code and the code for the correlation test, as well as putting the whole lab together. Harold and Max did the correlation test, equally slipting the work.
