@@ -1,0 +1,66 @@
+---
+title: "Lab 12 Max"
+author: "Max Ward"
+date: "4/10/2019"
+output: html_document
+---
+
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gapminder)
+library(stringr)
+view(gapminder_unfiltered)
+data12 <- gapminder_unfiltered
+```
+
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+perm_cor <- function(perms = 1000, x, y)
+{
+  # Step 1:
+  # Create vector of zeroes of length "perms" to store
+  # permuted mean differnces
+  zero_vector = numeric(1000)
+  # Loop throught number of permutations
+  for (i in c(1:perms))
+  {
+    # Step 2:
+    # Randomly mix up the values in the vector "y"
+    mix_y= sample(y, length(y), replace=FALSE)
+    # Step 3:
+    # Compute the correlation between x and the randomly mixed
+    # up y-vector. Store this value in the vector from step 1.
+    corr = cor(x, mix_y)
+    
+    zero_vector[i] = (corr)
+  }
+  
+  # Step 4:
+  # Return new updated vector, created in step 1
+  return(zero_vector)
+}
+```
+
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+Lab12 = perm_cor(perms=1000,data12$pop, data12$gdpPercap)
+```
+
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+yeah = cor(data12$gdpPercap, data12$pop)
+```
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+m1 <- as_tibble(Lab12)
+```
+
+```{r,echo=FALSE,message = FALSE, warning=FALSE}
+ggplot(data = m1)+
+  geom_histogram(mapping = aes(x= Lab12))+
+  geom_vline(xintercept = yeah, color = 'blue') +
+  ggtitle('Correlation Permutation Test (GDP Percap vs Population)')
+```
+
+As we can see from the graph the correlation between population and GDP Percap is very rare in the order it was given (blue line) becuase on the graph the blue line is relatively far away from the rest of the data and is an outlier.  
+
+##Team
+Max and Harold both worked on Correlation Permuation Test.  
+
